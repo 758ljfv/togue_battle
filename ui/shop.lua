@@ -1,316 +1,177 @@
+local ac = require('ac')
+local Cars = require('cars')
+local SaveModule = require('save')
+
 local Shop = {}
 
-local ui_active = false
-local current_tab = "new" -- "new" или "used"
-local scroll_offset = 0
-local selected_car_index = 1
-local selected_brand = nil -- Для фильтрации по марке
-local visible_items = 5 -- Должно быть объявлено до использования в update
+Shop.brands = {'Все', 'Toyota', 'Mazda', 'Nissan'}
+Shop.current_brand = 1
+Shop.scroll_offset = 0
+Shop.hovered_button = nil
+Shop.brand_buttons = {} -- Храним координаты кнопок брендов
 
--- Хранение зон кнопок для обработки кликов
-local brand_buttons = {} -- {x, y, w, h, brand}
-local tab_buttons = {}   -- {x, y, w, h, type}
-local car_buttons = {}   -- {index, x, y, w, h, car}
+function Shop.draw()
+    local screen_w, screen_h = ac.getScreenResolution()
+    local panel_w, panel_h = 900, 650
+    local panel_x, panel_y = (screen_w - panel_w) / 2, (screen_h - panel_h) / 2
 
--- Вспомогательные функции для отрисовки
-local function draw_rect(x, y, w, h, color)
-    ac.renderQuad(x, y, w, h, color)
-end
+    -- Фон панели
+    ac.renderRect(panel_x, panel_y, panel_w, panel_h, {r = 20, g = 20, b = 25, a = 230})
 
-local function draw_text(x, y, size, text, color, align)
-    ac.renderText(text, x, y, size, color, align or 0)
-end
-
-function Shop.init()
-    ui_active = true
-    current_tab = "new"
-    selected_car_index = 1
-    scroll_offset = 0
-    selected_brand = nil
-end
-
-function Shop.update(dt)
-    if not ui_active then return end
-
-    -- Получаем состояние мыши
-    local mouse_x, mouse_y = ac.getMousePosition()
-    local left_click = ac.getMouseState().left
-    local scroll = ac.getMouseScroll()
-    
-    -- Обработка скролла колесом
-    if scroll ~= 0 then
-        local list = Shop.get_current_list()
-        if #list > visible_items then
-            scroll_offset = scroll_offset - scroll
-            scroll_offset = math.max(0, math.min(scroll_offset, #list - visible_items))
-        end
-    end
-
-    -- Управление клавиатурой (стрелки вверх/вниз, энтер, таб)
-    if ac.getKeyDown("up") then
-        selected_car_index = math.max(1, selected_car_index - 1)
-        ac.sleep(0.15) -- задержка для удобства
-    end
-    if ac.getKeyDown("down") then
-        local list = Shop.get_current_list()
-        selected_car_index = math.min(#list, selected_car_index + 1)
-        ac.sleep(0.15)
-    end
-    
-    if ac.getKeyDown("return") then
-        local list = Shop.get_current_list()
-        if #list > 0 then
-            local car = list[selected_car_index]
-            Shop.try_buy_car(car, current_tab)
-        end
-        ac.sleep(0.2)
-    end
-    
-    if ac.getKeyDown("escape") then
-        ui_active = false
-        -- Возврат в главное меню через Menu.backToMain()
-        local menu = require("ui.menu")
-        menu.backToMain()
-    end
-    
-    -- Переключение вкладок цифрами
-    if ac.getKeyDown("1") then 
-        current_tab = "new" 
-        selected_car_index = 1
-    end
-    if ac.getKeyDown("2") then 
-        current_tab = "used" 
-        selected_car_index = 1
-    end
-    
-    -- Обработка кликов мыши (вызывается после отрисовки в render)
-    Shop.handle_mouse_clicks(mouse_x, mouse_y, left_click)
-end
-
--- Обработка кликов мыши по кнопкам
-function Shop.handle_mouse_clicks(mx, my, clicked)
-    if not clicked then return end
-    
-    -- Сбрасываем массивы кнопок перед заполнением (они заполняются в render)
-    -- Проверка клика по табам
-    for _, btn in ipairs(tab_buttons) do
-        if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-            current_tab = btn.type
-            selected_car_index = 1
-            scroll_offset = 0
-            return
-        end
-    end
-    
-    -- Проверка клика по брендам (только для новых авто)
-    if current_tab == "new" then
-        for _, btn in ipairs(brand_buttons) do
-            if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-                selected_brand = btn.brand
-                selected_car_index = 1
-                scroll_offset = 0
-                return
-            end
-        end
-    end
-    
-    -- Проверка клика по автомобилям
-    for _, btn in ipairs(car_buttons) do
-        if mx >= btn.x and mx <= btn.x + btn.w and my >= btn.y and my <= btn.y + btn.h then
-            selected_car_index = btn.index
-            -- Покупка по клику (опционально, можно оставить только по Enter)
-            -- local list = Shop.get_current_list()
-            -- if #list > 0 then
-            --     Shop.try_buy_car(list[btn.index], current_tab)
-            -- end
-            return
-        end
-    end
-end
-
--- Получение текущего списка автомобилей
-function Shop.get_current_list()
-    if current_tab == "new" then
-        if selected_brand then
-            return Cars.get_cars_by_brand(selected_brand)
-        else
-            return Cars.get_new_cars()
-        end
-    else
-        return Cars.get_used_cars()
-    end
-end
-
-function Shop.try_buy_car(car, type)
-    local save_module = require("save.save")
-    local data = save_module.load()
-    
-    -- Проверка, есть ли уже такая машина
-    if save_module.hasCar(data, car.id) then
-        print("Эта машина уже у вас!")
-        return
-    end
-    
-    local result = Cars.buy_car(car.id, type, data.money)
-    
-    if result.success then
-        -- Обновляем сохранение
-        save_module.addMoney(data, result.remaining_money - data.money)
-        save_module.buyCar(data, car.id)
-        
-        -- Если это первая покупка, ставим её активной
-        if #save_module.getOwnedCars(data) == 1 then
-            save_module.setActiveCar(data, car.id)
-        end
-        
-        ui_active = false
-        print("Машина куплена: " .. car.name)
-        
-        -- Возврат в главное меню
-        local menu = require("ui.menu")
-        menu.backToMain()
-    else
-        print("Ошибка покупки: " .. result.error)
-    end
-end
-
-function Shop.render()
-    if not ui_active then return end
-
-    -- Очищаем массивы кнопок перед отрисовкой
-    brand_buttons = {}
-    tab_buttons = {}
-    car_buttons = {}
-
-    local W, H = ac.getScreenWidth(), ac.getScreenHeight()
-    local cx, cy = W / 2, H / 2
-    
-    -- Фон затемнения
-    draw_rect(0, 0, W, H, {0, 0, 0, 0.7})
-    
-    -- Основное окно
-    local win_w, win_h = 900, 650
-    local win_x, win_y = cx - win_w / 2, cy - win_h / 2
-    
-    draw_rect(win_x, win_y, win_w, win_h, {0.05, 0.05, 0.05, 0.95})
-    draw_rect(win_x, win_y, win_w, 4, {1, 1, 1, 1}) -- Верхняя граница
-    
     -- Заголовок
-    draw_text(cx, win_y + 30, 24, "АВТОСАЛОН", {1, 1, 1, 1}, 1)
-    
+    ac.renderText(panel_x + 20, panel_y + 20, 'Автосалон', 28, {r = 255, g = 255, b = 255})
+
     -- Баланс
-    local save_module = require("save.save")
-    local data = save_module.load()
-    local money = save_module.getMoney(data)
-    draw_text(win_x + 20, win_y + 30, 18, string.format("Баланс: %d ¥", money), {0, 1, 0, 1}, 0)
-    
-    -- Вкладки
-    local tab_y = win_y + 70
-    local tab_h = 40
-    local new_tab_x = cx - 150
-    local used_tab_x = cx + 50
-    
-    -- Кнопка "Новые"
-    local new_color = (current_tab == "new") and {0, 0.8, 1, 1} or {0.3, 0.3, 0.3, 1}
-    draw_rect(new_tab_x - 80, tab_y, 140, tab_h, new_color)
-    draw_text(new_tab_x, tab_y + 20, 16, "Салон", {1, 1, 1, 1}, 1)
-    table.insert(tab_buttons, {x = new_tab_x - 80, y = tab_y, w = 140, h = tab_h, type = "new"})
-    
-    -- Кнопка "Б/У"
-    local used_color = (current_tab == "used") and {0, 0.8, 1, 1} or {0.3, 0.3, 0.3, 1}
-    draw_rect(used_tab_x - 80, tab_y, 140, tab_h, used_color)
-    draw_text(used_tab_x, tab_y + 20, 16, "Б/У Рынок", {1, 1, 1, 1}, 1)
-    table.insert(tab_buttons, {x = used_tab_x - 80, y = tab_y, w = 140, h = tab_h, type = "used"})
-    
-    -- Список брендов (только для новых авто)
-    if current_tab == "new" then
-        local brands = Cars.get_brands()
-        local brand_y = win_y + 125
-        local all_brands_x = win_x + 30
-        
-        -- Кнопка "Все"
-        local all_color = (selected_brand == nil) and {0, 0.8, 1, 1} or {0.2, 0.2, 0.2, 1}
-        draw_rect(all_brands_x, brand_y, 80, 30, all_color)
-        draw_text(all_brands_x + 40, brand_y + 15, 14, "Все", {1, 1, 1, 1}, 1)
-        table.insert(brand_buttons, {x = all_brands_x, y = brand_y, w = 80, h = 30, brand = nil})
-        
-        -- Остальные бренды
-        local brand_x = all_brands_x + 90
-        for i, brand in ipairs(brands) do
-            local brand_color = (selected_brand == brand) and {0, 0.8, 1, 1} or {0.2, 0.2, 0.2, 1}
-            draw_rect(brand_x, brand_y, 100, 30, brand_color)
-            draw_text(brand_x + 50, brand_y + 15, 14, brand:upper(), {1, 1, 1, 1}, 1)
-            table.insert(brand_buttons, {x = brand_x, y = brand_y, w = 100, h = 30, brand = brand})
-            brand_x = brand_x + 110
+    local money_text = string.format('Баланс: $%d', SaveModule.data.money or 0)
+    ac.renderText(panel_x + panel_w - 200, panel_y + 25, money_text, 22, {r = 100, g = 255, b = 100})
+
+    -- Кнопки брендов
+    local brand_y = panel_y + 70
+    local brand_x_start = panel_x + 20
+    local brand_w, brand_h = 100, 40
+    Shop.brand_buttons = {} -- Очищаем перед перерисовкой
+
+    for i, brand in ipairs(Shop.brands) do
+        local bx = brand_x_start + (i - 1) * (brand_w + 10)
+        local is_hovered = Shop.is_mouse_over(bx, brand_y, brand_w, brand_h)
+        local color = {r = 50, g = 50, b = 60, a = 255}
+
+        if is_hovered then
+            color = {r = 80, g = 80, b = 100, a = 255}
+            Shop.hovered_button = {'brand', i}
+            if ac.getMouseState().left then
+                Shop.current_brand = i
+            end
+        elseif Shop.current_brand == i then
+            color = {r = 100, g = 150, b = 255, a = 255}
+        end
+
+        ac.renderRect(bx, brand_y, brand_w, brand_h, color)
+        ac.renderText(bx + 10, brand_y + 10, brand, 18, {r = 255, g = 255, b = 255})
+
+        -- Сохраняем координаты для обработки
+        table.insert(Shop.brand_buttons, {x = bx, y = brand_y, w = brand_w, h = brand_h, brand = brand})
+    end
+
+    -- Горячие клавиши для брендов
+    for i = 1, #Shop.brands do
+        if ac.getKeyboardState()['d' .. i] then
+            Shop.current_brand = i
         end
     end
-    
+
     -- Список автомобилей
-    local list = Shop.get_current_list()
-    local start_y = win_y + 175
-    local item_h = 85
-    
-    -- Отрисовка списка
-    for i = 1, math.min(#list, visible_items) do
-        local global_index = i + scroll_offset
-        if global_index <= #list then
-            local car = list[global_index]
-            local is_selected = (global_index == selected_car_index)
-            
-            -- Проверка владения
-            local owned = save_module.hasCar(data, car.id)
-            
-            local bg_color = is_selected and {0.2, 0.2, 0.2, 1} or {0.1, 0.1, 0.1, 0.5}
-            if owned then
-                bg_color = {0.1, 0.15, 0.1, 0.5} -- Зеленоватый оттенок для купленных
-            end
-            
-            local btn_x = win_x + 20
-            local btn_y = start_y + (i-1)*item_h
-            local btn_w = win_w - 40
-            local btn_h = item_h - 10
-            
-            if is_selected then
-                draw_rect(btn_x, btn_y, btn_w, btn_h, bg_color)
-                draw_rect(btn_x, btn_y, 4, btn_h, {0, 0.8, 1, 1}) -- Индикатор выбора
-            else
-                draw_rect(btn_x, btn_y, btn_w, btn_h, bg_color)
-            end
-            
-            -- Сохраняем зону кнопки для обработки кликов
-            table.insert(car_buttons, {index = global_index, x = btn_x, y = btn_y, w = btn_w, h = btn_h, car = car})
-            
-            -- Название и бренд
-            local displayName = car.name
-            if car.brand then
-                displayName = string.format("%s (%s)", car.name, car.brand:upper())
-            end
-            draw_text(btn_x + 40, btn_y + 20, 18, displayName, {1, 1, 1, 1}, 0)
-            
-            -- Цена
-            local priceColor = owned and {0.5, 0.5, 0.5, 1} or {1, 1, 0, 1}
-            local priceText = owned and "КУПЛЕНО" or string.format("%d ¥", car.price)
-            draw_text(btn_x + btn_w - 120, btn_y + 20, 18, priceText, priceColor, 2)
-            
-            -- Описание
-            draw_text(btn_x + 40, btn_y + 45, 14, car.description or "", {0.7, 0.7, 0.7, 1}, 0)
-            
-            -- Характеристики (мини)
-            local stats = ""
-            if car.stats then
-                stats = string.format("PWR: %d | WGT: %d | GRP: %d", 
-                    car.stats.power or 0, 
-                    car.stats.weight or 0, 
-                    car.stats.grip or 0)
-            end
-            draw_text(btn_x + 40, btn_y + 65, 12, stats, {0.5, 0.8, 1, 1}, 0)
-        end
+    local list_x = panel_x + 20
+    local list_y = panel_y + 130
+    local list_w = panel_w - 40
+    local list_h = panel_h - 160
+
+    -- Фон списка
+    ac.renderRect(list_x, list_y, list_w, list_h, {r = 30, g = 30, b = 35, a = 200})
+
+    Shop.draw_car_list(list_x, list_y, list_w, list_h)
+
+    -- Подсказка
+    ac.renderText(panel_x + 20, panel_y + panel_h - 30, 'ЛКМ - Купить/Выбрать бренд | Колесо - Прокрутка | 1-4 - Бренд', 16, {r = 200, g = 200, b = 200})
+end
+
+function Shop.is_mouse_over(x, y, w, h)
+    local mouse_x, mouse_y = ac.getMousePosition()
+    return mouse_x >= x and mouse_x <= x + w and mouse_y >= y and mouse_y <= y + h
+end
+
+function Shop.draw_car_list(x, y, w, h)
+    local cars = Cars.get_cars_by_brand(Shop.brands[Shop.current_brand])
+    local owned_cars = SaveModule.data.cars or {}
+    local max_visible = 7
+    local item_height = 70
+
+    -- Ограничиваем скролл
+    if #cars <= max_visible then
+        Shop.scroll_offset = 0
+    elseif Shop.scroll_offset > #cars - max_visible then
+        Shop.scroll_offset = #cars - max_visible
     end
-    
-    -- Подсказки
-    draw_text(cx, win_y + win_h - 50, 14, "↑/↓ : Выбор | ENTER : Купить | 1/2 : Вкладки | ESC : Назад", {0.8, 0.8, 0.8, 1}, 1)
-    if current_tab == "new" then
-        draw_text(cx, win_y + win_h - 30, 12, "Клик по названию бренда для фильтрации", {0.6, 0.6, 0.6, 1}, 1)
+    if Shop.scroll_offset < 0 then Shop.scroll_offset = 0 end
+
+    for i = 1, math.min(#cars, max_visible) do
+        local car_index = Shop.scroll_offset + i
+        if car_index > #cars then break end
+
+        local car = cars[car_index]
+        local item_y = y + (i - 1) * item_height
+        local is_hovered = Shop.is_mouse_over(x, item_y, w, item_height)
+
+        -- Проверка владения
+        local is_owned = false
+        for _, owned in ipairs(owned_cars) do
+            if owned.id == car.id then
+                is_owned = true
+                break
+            end
+        end
+
+        -- Цвет фона
+        local bg_color = {r = 40, g = 40, b = 45, a = 255}
+        if is_hovered then
+            bg_color = {r = 60, g = 60, b = 70, a = 255}
+            Shop.hovered_button = {'car', car, car_index}
+
+            -- Обработка клика покупки
+            if ac.getMouseState().left then
+                if not is_owned then
+                    if SaveModule.data.money >= car.price then
+                        SaveModule.data.money = SaveModule.data.money - car.price
+                        table.insert(SaveModule.data.cars, {
+                            id = car.id,
+                            name = car.name,
+                            brand = car.brand,
+                            price = car.price,
+                            type = car.type
+                        })
+                        SaveModule.save()
+                    else
+                        -- Можно добавить сообщение об ошибке
+                    end
+                end
+            end
+        end
+
+        ac.renderRect(x, item_y, w, item_height, bg_color)
+
+        -- Название авто
+        local name_color = {r = 255, g = 255, b = 255}
+        if is_owned then
+            name_color = {r = 100, g = 255, b = 100}
+        end
+        ac.renderText(x + 15, item_y + 10, car.name, 20, name_color)
+
+        -- Цена
+        local price_color = {r = 255, g = 200, b = 50}
+        if is_owned then
+            price_color = {r = 150, g = 150, b = 150}
+        end
+        ac.renderText(x + w - 150, item_y + 10, string.format('$%d', car.price), 20, price_color)
+
+        -- Статус
+        local status = is_owned and 'В ГАРАЖЕ' or 'ДОСТУПЕН'
+        local status_color = is_owned and {r = 100, g = 255, b = 100} or {r = 255, g = 255, b = 255}
+        ac.renderText(x + w - 150, item_y + 35, status, 16, status_color)
+
+        -- Характеристики
+        local stats_text = string.format('Скорость: %d | Ускорение: %.1f | Управление: %.1f',
+            car.max_speed or 0, car.acceleration or 0, car.handling or 0)
+        ac.renderText(x + 15, item_y + 35, stats_text, 14, {r = 200, g = 200, b = 200})
+    end
+
+    -- Обработка скролла колеса
+    local scroll = ac.getMouseScroll()
+    if scroll ~= 0 and #cars > max_visible then
+        Shop.scroll_offset = Shop.scroll_offset + (scroll > 0 and -1 or 1)
+        if Shop.scroll_offset < 0 then Shop.scroll_offset = 0 end
+        if Shop.scroll_offset > #cars - max_visible then
+            Shop.scroll_offset = #cars - max_visible
+        end
     end
 end
 
