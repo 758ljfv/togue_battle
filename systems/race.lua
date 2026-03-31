@@ -135,11 +135,13 @@ function Race.checkBlacklistProgress(playerData)
         playerData.stats.blacklist_rank = currentRank - 1
         print(string.format("Новый ранг в блэклисте: #%d", playerData.stats.blacklist_rank))
         
-        -- Проверка на разблокировку новой области
+        -- Проверка на разблокировку новой области при достижении 1 места
         if playerData.stats.blacklist_rank == 1 then
             print("!!! РАЗБЛОКИРОВАНА НОВАЯ ОБЛАСТЬ !!!")
-            -- Здесь логика разблокировки следующей трассы
-            -- playerData.stats.area_unlocked = "next_track"
+            -- Используем систему Areas для разблокировки
+            local Areas = require("systems.areas")
+            Areas.setSaveData(playerData)
+            Areas.unlockNextArea()
         end
     end
 end
