@@ -40,8 +40,11 @@ function BlacklistUI.render()
     -- Фон
     ac.renderRect(0, 0, screenWidth, screenHeight, colors.bg)
     
-    -- Заголовок
-    ac.renderText("BLACKLIST - AKINA", 100, 50, 36, "bold", colors.accent)
+    -- Заголовок с текущей областью
+    local currentArea = sessionData.player and sessionData.player.stats and sessionData.player.stats.area_unlocked or "akina"
+    local areaNames = { akina = "AKINA", myogi = "MYOGI" }
+    local areaDisplayName = areaNames[currentArea] or "AKINA"
+    ac.renderText("BLACKLIST - " .. areaDisplayName, 100, 50, 36, "bold", colors.accent)
     
     -- Список гонщиков
     local startY = 150
@@ -107,6 +110,13 @@ function BlacklistUI.render()
         ac.renderText(string.format("Побеждено боссов: %d/%d", #player.defeated_drivers, 10), 400, statsInfoY + 30, 18, "normal", colors.green)
         ac.renderText(string.format("Репутация: %d", player.reputation), 150, statsInfoY + 60, 18, "normal", colors.text)
         ac.renderText(string.format("Деньги: $%d", player.money), 400, statsInfoY + 60, 18, "normal", colors.green)
+        
+        -- Отображение разблокированных областей
+        local areasText = "Области: Akina"
+        if player.stats.area_unlocked == "myogi" then
+            areasText = areasText .. ", Myogi"
+        end
+        ac.renderText(areasText, 700, statsInfoY + 60, 18, "normal", colors.accent)
     end
     
     -- Кнопка назад

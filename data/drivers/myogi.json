@@ -1,0 +1,120 @@
+{
+  "track": "myogi",
+
+  "drivers":[
+
+    {
+      "id":"myogi_01",
+
+      "type": "blacklist",
+
+      "blacklist_position": 9,
+
+      "name":"Shingo Shoji",
+
+      "nickname":"The Night Racer",
+
+      "car_id":"s13_black",
+
+      "home_track":"myogi",
+
+      "route":"downhill",
+
+      "skill":78,
+
+      "aggression":65,
+
+      "consistency":72,
+
+      "battle_style":"aggressive",
+
+      "reputation_reward":8,
+
+      "money_reward":1500,
+
+      "unlock_reputation":10,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"myogi_street_01",
+
+      "type":"street",
+
+      "name":"Takeshi Nakazato",
+
+      "car_id":"skyline_r32",
+
+      "skill":74,
+
+      "money_reward":700,
+
+      "reputation_reward":2,
+
+      "home_track":"myogi",
+
+      "route":"downhill"
+    },
+    {
+      "id":"myogi_street_02",
+
+      "type":"street",
+
+      "name":"Satoshi Kojima",
+
+      "car_id":"silvia_s14",
+
+      "skill":70,
+
+      "money_reward":600,
+
+      "reputation_reward":2,
+
+      "home_track":"myogi",
+
+      "route":"downhill"
+    },
+    {
+      "id":"myogi_street_03",
+
+      "type":"street",
+
+      "name":"Hiroshi Matsumoto",
+
+      "car_id":"integra_dc2",
+
+      "skill":68,
+
+      "money_reward":550,
+
+      "reputation_reward":2,
+
+      "home_track":"myogi",
+
+      "route":"downhill"
+    },
+    {
+      "id":"myogi_street_04",
+
+      "type":"street",
+
+      "name":"Yusuke Okuyama",
+
+      "car_id":"civic_ek9",
+
+      "skill":72,
+
+      "money_reward":650,
+
+      "reputation_reward":2,
+
+      "home_track":"myogi",
+
+      "route":"downhill"
+    }
+
+  ]
+
+}

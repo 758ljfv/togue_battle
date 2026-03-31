@@ -1,0 +1,30 @@
+{
+  "areas": [
+    {
+      "id": "akina",
+      "name": "Akina",
+      "track_id": "akina_downhill", 
+      "boss_id": "takumi_ae86",
+      "racers": [
+        "iku_ae86",
+        "ken_s13",
+        "ryo_fc3s",
+        "takumi_ae86"
+      ],
+      "order": 1
+    },
+    {
+      "id": "myogi",
+      "name": "Myogi",
+      "track_id": "myogi_downhill",
+      "boss_id": "shingo_s13",
+      "racers": [
+        "myogi_racer_1",
+        "myogi_racer_2",
+        "shingo_s13"
+      ],
+      "order": 2,
+      "locked": true
+    }
+  ]
+}
