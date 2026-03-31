@@ -155,7 +155,7 @@ function Shop.try_buy_car(car, type)
     
     if result.success then
         -- Обновляем сохранение
-        save_module.addMoney(data, result.remaining_money - data.money)
+        data.money = result.remaining_money
         save_module.buyCar(data, car.id)
         
         -- Если это первая покупка, ставим её активной
