@@ -1,1 +1,1 @@
-Nothing needs to be added to .gitignore since only a Lua source file was modified and no build artifacts, dependencies, or temporary files were included in the changes.
+Nothing should be ignored based on the provided file changes. The modification of 'ui/shop.lua' is a source code file that should not be added to .gitignore.
