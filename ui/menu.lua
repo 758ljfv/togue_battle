@@ -22,7 +22,8 @@ local colors = {
 local menuState = {
     visible = false,
     hoveredButton = nil,
-    sessionData = nil
+    sessionData = nil,
+    gameModule = nil
 }
 
 -- Кнопки меню
@@ -42,8 +43,9 @@ local function createButton(id, text, x, y, width, height, onClick)
 end
 
 -- Инициализация меню
-function Menu.init(sessionData)
+function Menu.init(sessionData, gameModule)
     menuState.sessionData = sessionData
+    menuState.gameModule = gameModule
     menuState.visible = true
     
     local centerX = screenWidth / 2
@@ -196,10 +198,10 @@ function Menu.startRandomRace()
     print(string.format("Навык: %d", rival.skill or 50))
     print(string.format("Награда: $%d | +%d репутации", rival.money_reward or 500, rival.reputation_reward or 1))
     
-    -- Здесь будет запуск гонки
-    -- RaceModule.start(rival, "street")
-    
-    menuState.visible = false
+    -- Запуск гонки через Game модуль
+    if menuState.gameModule then
+        menuState.gameModule.startRace(rival, "street")
+    end
 end
 
 function Menu.challengeBoss()
@@ -226,14 +228,14 @@ function Menu.challengeBoss()
         return
     end
     
-    -- Здесь будет запуск гонки
-    -- RaceModule.start(boss, "blacklist")
-    
-    menuState.visible = false
+    -- Запуск гонки через Game модуль
+    if menuState.gameModule then
+        menuState.gameModule.startRace(boss, "blacklist")
+    end
 end
 
-function Menu.show(sessionData)
-    Menu.init(sessionData)
+function Menu.show(sessionData, gameModule)
+    Menu.init(sessionData, gameModule)
 end
 
 function Menu.hide()
