@@ -117,24 +117,26 @@ function Shop.draw_car_list(x, y, w, h)
             bg_color = {r = 60, g = 60, b = 70, a = 255}
             Shop.hovered_button = {'car', car, car_index}
 
-            -- Обработка клика покупки
-            if ac.getMouseState().left then
-                if not is_owned then
-                    if SaveModule.data.money >= car.price then
-                        SaveModule.data.money = SaveModule.data.money - car.price
-                        table.insert(SaveModule.data.cars, {
-                            id = car.id,
-                            name = car.name,
-                            brand = car.brand,
-                            price = car.price,
-                            type = car.type
-                        })
-                        SaveModule.save()
-                    else
-                        -- Можно добавить сообщение об ошибке
-                    end
-                end
-            end
+function Shop.try_buy_car(car, type)
+    local save_module = require("save.save")
+    local data = save_module.load()
+    
+    -- Проверка, есть ли уже такая машина
+    if save_module.hasCar(data, car.id) then
+        print("Эта машина уже у вас!")
+        return
+    end
+    
+    local result = Cars.buy_car(car.id, type, data.money)
+    
+    if result.success then
+        -- Обновляем сохранение
+        data.money = result.remaining_money
+        save_module.buyCar(data, car.id)
+        
+        -- Если это первая покупка, ставим её активной
+        if #save_module.getOwnedCars(data) == 1 then
+            save_module.setActiveCar(data, car.id)
         end
 
         ac.renderRect(x, item_y, w, item_height, bg_color)
