@@ -1,0 +1,63 @@
+{
+  "track": "akina",
+
+  "drivers":[
+
+    {
+      "id":"akina_01",
+
+      "type": "blacklist",
+
+      "blacklist_position": 10,
+
+      "name":"Kenta Sato",
+
+      "nickname":"The Beginner Hunter",
+
+      "car_id":"ae86_stock",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":75,
+
+      "aggression":60,
+
+      "consistency":70,
+
+      "battle_style":"defensive",
+
+      "reputation_reward":5,
+
+      "money_reward":1000,
+
+      "unlock_reputation":0,
+
+      "unlocked":true,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_street_01",
+
+      "type":"street",
+
+      "name":"Daichi Mori",
+
+      "car_id":"silvia_s13",
+
+      "skill":68,
+
+      "money_reward":500,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
+    }
+
+  ]
+
+}

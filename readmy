@@ -1,0 +1,40 @@
+Структура:
+
+touge_battles/
+
+src/
+  main.lua
+
+data/
+  drivers/
+  cars/
+  tracks/
+
+systems/
+  reputation.lua
+  race.lua
+  player.lua
+  touge_loader.lua
+
+ui/
+  menu.lua
+  blacklist.lua
+
+events/
+  akina/
+
+save/
+  save.lua
+
+config/
+  game_config.lua
+
+===========================================================================
+
+Mark Directory As → Sources Root
+
+для:
+
+src/
+systems/
+ui/
