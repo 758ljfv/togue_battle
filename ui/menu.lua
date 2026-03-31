@@ -15,7 +15,8 @@ local colors = {
     accent = {0.95, 0.2, 0.2, 1}, -- красный акцент
     green = {0.2, 0.8, 0.2, 1},
     button = {0.15, 0.15, 0.2, 1},
-    buttonHover = {0.25, 0.25, 0.35, 1}
+    buttonHover = {0.25, 0.25, 0.35, 1},
+    blue = {0.2, 0.6, 1, 1}
 }
 
 -- Состояние меню
@@ -23,11 +24,14 @@ local menuState = {
     visible = false,
     hoveredButton = nil,
     sessionData = nil,
-    gameModule = nil
+    gameModule = nil,
+    currentScreen = "main" -- main, shop, garage
 }
 
 -- Кнопки меню
 local buttons = {}
+local shopModule = nil
+local garageModule = nil
 
 local function createButton(id, text, x, y, width, height, onClick)
     return {
@@ -47,19 +51,20 @@ function Menu.init(sessionData, gameModule)
     menuState.sessionData = sessionData
     menuState.gameModule = gameModule
     menuState.visible = true
+    menuState.currentScreen = "main"
     
     local centerX = screenWidth / 2
-    local startY = 300
+    local startY = 280
     local buttonWidth = 400
-    local buttonHeight = 60
-    local spacing = 20
+    local buttonHeight = 55
+    local spacing = 18
     
     -- Заголовок
     buttons.title = {
         id = "title",
         text = "TOUGE BATTLES",
         x = centerX - 200,
-        y = 200,
+        y = 180,
         width = 400,
         height = 50,
         isTitle = true
@@ -87,12 +92,34 @@ function Menu.init(sessionData, gameModule)
         function() Menu.challengeBoss() end
     )
     
+    -- Кнопка автосалона
+    buttons.shop = createButton(
+        "shop",
+        "АВТОСАЛОН",
+        centerX - buttonWidth/2,
+        startY + (buttonHeight + spacing) * 2,
+        buttonWidth,
+        buttonHeight,
+        function() Menu.openShop() end
+    )
+    
+    -- Кнопка гаража
+    buttons.garage = createButton(
+        "garage",
+        "ГАРАЖ",
+        centerX - buttonWidth/2,
+        startY + (buttonHeight + spacing) * 3,
+        buttonWidth,
+        buttonHeight,
+        function() Menu.openGarage() end
+    )
+    
     -- Статистика
     buttons.stats = {
         id = "stats",
         isStats = true,
         x = centerX - 200,
-        y = startY + (buttonHeight + spacing) * 2 + 30,
+        y = startY + (buttonHeight + spacing) * 4 + 20,
         width = 400,
         height = 100
     }
@@ -107,12 +134,28 @@ function Menu.init(sessionData, gameModule)
         buttonHeight,
         function() Menu.hide() end
     )
+    
+    -- Загрузка модулей магазина и гаража
+    shopModule = require("ui.shop")
+    garageModule = require("ui.garage")
 end
 
 -- Отрисовка меню
 function Menu.render()
     if not menuState.visible then return end
     
+    -- Рендер в зависимости от текущего экрана
+    if menuState.currentScreen == "main" then
+        Menu.renderMain()
+    elseif menuState.currentScreen == "shop" and shopModule then
+        shopModule.render()
+    elseif menuState.currentScreen == "garage" and garageModule then
+        garageModule.render()
+    end
+end
+
+-- Отрисовка главного меню
+function Menu.renderMain()
     -- Фон
     ac.renderRect(0, 0, screenWidth, screenHeight, colors.bg)
     
@@ -137,8 +180,8 @@ function Menu.render()
         -- Панель статистики
         ac.renderRect(statsPanel.x - 10, statsPanel.y - 10, statsPanel.width + 20, statsPanel.height + 20, colors.panel)
         
-        local stats = require("save.save")
-        local wr = stats.getWR(player)
+        local save_module = require("save.save")
+        local wr = save_module.getWR(player)
         
         ac.renderText("СТАТИСТИКА", statsPanel.x, statsPanel.y, 18, "bold", colors.textDim)
         ac.renderText(string.format("Имя: %s", player.name), statsPanel.x, statsPanel.y + 25, 16, "normal", colors.text)
@@ -146,6 +189,14 @@ function Menu.render()
         ac.renderText(string.format("Деньги: $%d", player.money), statsPanel.x, statsPanel.y + 65, 16, "normal", colors.green)
         ac.renderText(string.format("Побед/Всего: %s", wr), statsPanel.x + statsPanel.width/2, statsPanel.y + 25, 16, "normal", colors.text)
         ac.renderText(string.format("Ранг: #%d", player.stats.blacklist_rank), statsPanel.x + statsPanel.width/2, statsPanel.y + 45, 16, "normal", colors.accent)
+        
+        -- Текущая машина
+        local activeCar = save_module.getActiveCar(player)
+        if activeCar then
+            ac.renderText(string.format("Авто: %s", activeCar), statsPanel.x + statsPanel.width/2, statsPanel.y + 65, 16, "normal", colors.blue)
+        else
+            ac.renderText("Авто: Нет", statsPanel.x + statsPanel.width/2, statsPanel.y + 65, 16, "normal", colors.textDim)
+        end
     end
     
     -- Доступные боссы
@@ -160,22 +211,30 @@ end
 function Menu.mouseMoved(x, y)
     if not menuState.visible then return end
     
-    for _, btn in pairs(buttons) do
-        if not btn.isTitle and not btn.isStats then
-            btn.hovered = (x >= btn.x and x <= btn.x + btn.width and y >= btn.y and y <= btn.y + btn.height)
+    -- Если мы в главном меню, обрабатываем наведение на кнопки
+    if menuState.currentScreen == "main" then
+        for _, btn in pairs(buttons) do
+            if not btn.isTitle and not btn.isStats then
+                btn.hovered = (x >= btn.x and x <= btn.x + btn.width and y >= btn.y and y <= btn.y + btn.height)
+            end
         end
     end
+    -- Для shop и garage обработка внутри их модулей
 end
 
 function Menu.mousePressed(x, y, button)
     if not menuState.visible or button ~= 1 then return end
     
-    for _, btn in pairs(buttons) do
-        if not btn.isTitle and not btn.isStats and btn.hovered then
-            if btn.onClick then btn.onClick() end
-            break
+    -- Если мы в главном меню, обрабатываем клики по кнопкам
+    if menuState.currentScreen == "main" then
+        for _, btn in pairs(buttons) do
+            if not btn.isTitle and not btn.isStats and btn.hovered then
+                if btn.onClick then btn.onClick() end
+                break
+            end
         end
     end
+    -- Для shop и garage обработка внутри их модулей
 end
 
 -- Действия кнопок
@@ -232,6 +291,24 @@ function Menu.challengeBoss()
     if menuState.gameModule then
         menuState.gameModule.startRace(boss, "blacklist")
     end
+end
+
+function Menu.openShop()
+    menuState.currentScreen = "shop"
+    if shopModule then
+        shopModule.init()
+    end
+end
+
+function Menu.openGarage()
+    menuState.currentScreen = "garage"
+    if garageModule then
+        garageModule.init()
+    end
+end
+
+function Menu.backToMain()
+    menuState.currentScreen = "main"
 end
 
 function Menu.show(sessionData, gameModule)
