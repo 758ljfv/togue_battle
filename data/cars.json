@@ -1,0 +1,68 @@
+{
+  "toyota": [
+    {
+      "id": "ktm_eighty_six",
+      "name": "AE86 Trueno",
+      "price": 15000,
+      "stats": {
+        "power": 130,
+        "weight": 940,
+        "grip": 75
+      }
+    },
+    {
+      "id": "ks_supra_mkiv",
+      "name": "Supra MKIV",
+      "price": 35000,
+      "stats": {
+        "power": 280,
+        "weight": 1510,
+        "grip": 80
+      }
+    }
+  ],
+  "mazda": [
+    {
+      "id": "ks_mazda_rx7",
+      "name": "RX-7 Spirit R",
+      "price": 32000,
+      "stats": {
+        "power": 280,
+        "weight": 1280,
+        "grip": 82
+      }
+    },
+    {
+      "id": "ks_mazda_mx5_nd",
+      "name": "MX-5 ND",
+      "price": 25000,
+      "stats": {
+        "power": 160,
+        "weight": 1050,
+        "grip": 85
+      }
+    }
+  ],
+  "nissan": [
+    {
+      "id": "ks_nissan_gtr_r34",
+      "name": "Skyline GT-R R34",
+      "price": 45000,
+      "stats": {
+        "power": 330,
+        "weight": 1560,
+        "grip": 88
+      }
+    },
+    {
+      "id": "ks_nissan_350z",
+      "name": "350Z",
+      "price": 28000,
+      "stats": {
+        "power": 280,
+        "weight": 1450,
+        "grip": 83
+      }
+    }
+  ]
+}
