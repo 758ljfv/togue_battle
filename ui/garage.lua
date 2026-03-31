@@ -3,17 +3,26 @@ local GarageUI = {}
 local activeTab = "garage" -- "garage" или "shop"
 local scrollOffset = 0
 local selectedCarIndex = 1
+local hoveredButton = nil
 
 -- Вспомогательная функция для отрисовки кнопки
-local function drawButton(x, y, w, h, text, isActive, isDisabled)
+local function drawButton(id, x, y, w, h, text, isActive, isDisabled)
     local r, g, b = 0.1, 0.1, 0.1
     if isActive then r, g, b = 0.2, 0.4, 0.6 end
     if isDisabled then r, g, b = 0.15, 0.15, 0.15 end
     
-    ui_push_rect(x, y, w, h, r, g, b, 0.8)
+    -- Проверка наведения мыши
+    local mx, my = ac.getMousePosition()
+    local isHovered = mx >= x and mx <= x + w and my >= y and my <= y + h
+    if isHovered and not isDisabled then
+        r, g, b = r + 0.1, g + 0.1, b + 0.1
+        hoveredButton = id
+    end
+    
+    ac.renderRect(x, y, w, h, r, g, b, 0.8)
     
     local color = isDisabled and {0.5, 0.5, 0.5} or {1, 1, 1}
-    ui_push_text(x + w/2, y + h/2, text, 0, 1, 0.5, 0.5, unpack(color))
+    ac.renderText(text, x + w/2, y + h/2, 0, 1, 0.5, 0.5, unpack(color))
 end
 
 -- Отрисовка списка автомобилей
@@ -34,10 +43,10 @@ local function drawCarList(cars, startX, startY, width, height, isShop)
             
             if not isShop then
                 -- Проверка владения для гаража
-                for _, owned in ipairs(Save.data.garage) do
+                for _, owned in ipairs(SaveModule.data.garage) do
                     if owned.id == car.id then
                         isOwned = true
-                        if Save.data.current_car and Save.data.current_car.id == car.id then
+                        if SaveModule.data.current_car and SaveModule.data.current_car.id == car.id then
                             isSelected = true
                         end
                         break
@@ -45,7 +54,7 @@ local function drawCarList(cars, startX, startY, width, height, isShop)
                 end
             else
                 -- Проверка владения для магазина (чтобы не купить дважды)
-                for _, owned in ipairs(Save.data.garage) do
+                for _, owned in ipairs(SaveModule.data.garage) do
                     if owned.id == car.id then
                         isOwned = true
                         break
@@ -54,37 +63,56 @@ local function drawCarList(cars, startX, startY, width, height, isShop)
             end
             
             if i == selectedCarIndex then
-                ui_push_rect(startX, y, width, itemHeight - 2, 0.2, 0.4, 0.6, 0.5)
+                ac.renderRect(startX, y, width, itemHeight - 2, 0.2, 0.4, 0.6, 0.3)
             end
             
             -- Название и цена
             local priceText = isShop and (isOwned and "Куплено" or string.format("%d$", car.price)) or "В гараже"
             if isOwned and not isShop then priceText = isSelected and "Выбрано" or "В наличии" end
             
-            ui_push_text(startX + 10, y + 15, car.name, 0, 0, 0, 0, 1, 1, 1)
-            ui_push_text(startX + 10, y + 35, string.format("HP: %d | Вес: %d", car.hp or 100, car.weight or 1000), 0, 0, 0, 0, 0.7, 0.7, 0.7)
-            ui_push_text(startX + width - 10, y + 20, priceText, 0, 1, 0, 0, 1, 1, 1)
+            ac.renderText(car.name, startX + 10, y + 15, 0, 0, 0, 0, 1, 1, 1)
+            ac.renderText(string.format("HP: %d | Вес: %d", car.hp or 100, car.weight or 1000), startX + 10, y + 35, 0, 0, 0, 0, 0.7, 0.7, 0.7)
+            ac.renderText(priceText, startX + width - 10, y + 20, 0, 1, 0, 0, 1, 1, 1)
             
             if isShop and not isOwned then
-                drawButton(startX + width - 100, y + 10, 90, 40, "Купить", false, false)
+                drawButton("buy_"..i, startX + width - 100, y + 10, 90, 40, "Купить", false, false)
             elseif not isShop and not isSelected then
-                drawButton(startX + width - 100, y + 10, 90, 40, "Выбрать", false, false)
+                drawButton("select_"..i, startX + width - 100, y + 10, 90, 40, "Выбрать", false, false)
             end
         end
     end
 end
 
 function GarageUI.update(dt, input)
-    local cars = (activeTab == "shop") and Cars.new_cars or Save.data.garage
+    local cars = (activeTab == "shop") and Cars.new_cars or SaveModule.data.garage
+    
+    -- Сброс наведения
+    hoveredButton = nil
     
     -- Навигация
     if input then
         -- Табы
-        if ui_button(100, 50, 150, 40, "Гараж") then activeTab = "garage" end
-        if ui_button(260, 50, 150, 40, "Салон") then activeTab = "shop" end
+        if ac.getMousePosition() then
+            local mx, my = ac.getMousePosition()
+            local isClicked = input.mouse_left or false
+            
+            -- Клик по табам
+            if mx >= 100 and mx <= 250 and my >= 50 and my <= 90 and isClicked then
+                activeTab = "garage"
+            elseif mx >= 260 and mx <= 410 and my >= 50 and my <= 90 and isClicked then
+                activeTab = "shop"
+            end
+        end
+        
+        if input.key_1 then activeTab = "garage" end
+        if input.key_2 then activeTab = "shop" end
         
         -- Кнопка назад
-        if ui_button(20, 20, 100, 40, "< Назад") then
+        local mx, my = ac.getMousePosition()
+        if mx and mx >= 20 and mx <= 120 and my >= 20 and my <= 60 and input.mouse_left then
+            return "menu"
+        end
+        if input.key_escape then
             return "menu"
         end
         
@@ -97,34 +125,44 @@ function GarageUI.update(dt, input)
             end
             
             -- Обработка действий (Enter/Click)
-            if input.confirm then
+            if input.confirm or input.mouse_left then
                 local car = cars[selectedCarIndex]
-                if activeTab == "shop" then
-                    -- Покупка
-                    local owned = false
-                    for _, c in ipairs(Save.data.garage) do if c.id == car.id then owned = true break end end
+                if car then
+                    local carY = 150 + (selectedCarIndex - 1) * 60 - scrollOffset
+                    local btnX = 50 + (ac.getScreenResolution().x - 100) - 100
+                    local btnY = carY + 10
                     
-                    if not owned then
-                        if Save.data.money >= car.price then
-                            Save.add_car(car)
-                            Save.data.money = Save.data.money - car.price
-                            Save.save()
-                            -- Звук покупки?
+                    if mx and my and mx >= btnX and mx <= btnX + 90 and my >= btnY and my <= btnY + 40 then
+                        if activeTab == "shop" then
+                            -- Покупка
+                            local owned = false
+                            for _, c in ipairs(SaveModule.data.garage) do 
+                                if c.id == car.id then 
+                                    owned = true 
+                                    break 
+                                end 
+                            end
+                            
+                            if not owned then
+                                if SaveModule.data.money >= car.price then
+                                    table.insert(SaveModule.data.garage, car)
+                                    SaveModule.data.money = SaveModule.data.money - car.price
+                                    SaveModule.save()
+                                end
+                            end
+                        else
+                            -- Выбор авто
+                            SaveModule.set_current_car(car)
+                            SaveModule.save()
                         end
-                    end
-                else
-                    -- Выбор авто
-                    if car then
-                        Save.set_current_car(car)
-                        Save.save()
                     end
                 end
             end
         end
         
-        -- Скролл колесиком (эмуляция)
+        -- Скролл колесиком
         if input.scroll then
-            scrollOffset = scrollOffset + input.scroll * 20
+            scrollOffset = scrollOffset - input.scroll * 30
         end
     end
     
@@ -132,20 +170,34 @@ function GarageUI.update(dt, input)
 end
 
 function GarageUI.render()
-    local w, h = ui_screen_size()
+    local w, h = ac.getScreenResolution()
     
     -- Фон
-    ui_push_rect(0, 0, w, h, 0.05, 0.05, 0.05, 0.95)
+    ac.renderRect(0, 0, w, h, 0.05, 0.05, 0.05, 0.95)
     
     -- Заголовок
-    ui_push_text(w/2, 40, activeTab == "shop" and "АВТОСАЛОН" or "ГАРАЖ", 0, 0.5, 0, 0, 1.2, 1.2, 1, 1, 1)
+    ac.renderText(activeTab == "shop" and "АВТОСАЛОН" or "ГАРАЖ", w/2, 40, 0, 0.5, 0, 0, 1.2, 1.2, 1, 1, 1)
     
     -- Баланс
-    ui_push_text(w - 20, 40, string.format("%d $", Save.data.money), 0, 1, 0, 0, 1, 1, 0, 1, 0)
+    ac.renderText(string.format("%d $", SaveModule.data.money), w - 20, 40, 0, 1, 0, 0, 1, 1, 0, 1, 0)
     
     -- Табы
     local tabY = 100
-    ui_push_rect(0, tabY, w, 2, 0.3, 0.3, 0.3, 1)
+    ac.renderRect(0, tabY, w, 2, 0.3, 0.3, 0.3, 1)
+    
+    -- Кнопки табов
+    local garageActive = activeTab == "garage"
+    local shopActive = activeTab == "shop"
+    
+    ac.renderRect(100, 50, 150, 40, garageActive and 0.2 or 0.1, garageActive and 0.4 or 0.1, garageActive and 0.6 or 0.1, 0.8)
+    ac.renderText("Гараж [1]", 175, 70, 0, 0.5, 0.5, 0, 1, 1, 1)
+    
+    ac.renderRect(260, 50, 150, 40, shopActive and 0.2 or 0.1, shopActive and 0.4 or 0.1, shopActive and 0.6 or 0.1, 0.8)
+    ac.renderText("Салон [2]", 335, 70, 0, 0.5, 0.5, 0, 1, 1, 1)
+    
+    -- Кнопка назад
+    ac.renderRect(20, 20, 100, 40, 0.15, 0.15, 0.15, 0.8)
+    ac.renderText("< Назад", 70, 40, 0, 0.5, 0.5, 0, 1, 1, 1)
     
     -- Список
     local listX, listY, listW, listH = 50, 150, w - 100, h - 200
@@ -153,15 +205,15 @@ function GarageUI.render()
     if activeTab == "shop" then
         drawCarList(Cars.new_cars, listX, listY, listW, listH, true)
     else
-        if #Save.data.garage == 0 then
-            ui_push_text(w/2, h/2, "У вас нет автомобилей. Купите первый в салоне!", 0, 0.5, 0.5, 0, 1, 1, 1, 0.5, 0.5)
+        if #SaveModule.data.garage == 0 then
+            ac.renderText("У вас нет автомобилей. Купите первый в салоне!", w/2, h/2, 0, 0.5, 0.5, 0, 1, 1, 1, 0.5, 0.5)
         else
-            drawCarList(Save.data.garage, listX, listY, listW, listH, false)
+            drawCarList(SaveModule.data.garage, listX, listY, listW, listH, false)
         end
     end
     
     -- Подсказки
-    ui_push_text(20, h - 30, "Стрелки: Выбор | Enter: Действие | Esc: Назад", 0, 0, 0, 0, 0.7, 0.7, 0.7)
+    ac.renderText("Стрелки: Выбор | Enter/Клик: Действие | Esc: Назад", 20, h - 30, 0, 0, 0, 0, 0.7, 0.7, 0.7)
 end
 
 return GarageUI
