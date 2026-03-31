@@ -1,5 +1,6 @@
 -- systems/race.lua
 local SaveModule = require("save.save")
+local Cars = require("cars")
 
 local Race = {}
 
@@ -12,18 +13,50 @@ local difficultyModifiers = {
     blacklist = { skillBonus = 10, moneyMultiplier = 2.0, repMultiplier = 3.0 }
 }
 
+-- Проверка наличия автомобиля у игрока перед гонкой
+function Race.canStartRace(playerData)
+    if not playerData then
+        return false, "Данные игрока не загружены"
+    end
+    
+    local owned_cars = playerData.owned_cars or {}
+    if #owned_cars == 0 then
+        return false, "У вас нет автомобилей! Купите машину в салоне."
+    end
+    
+    if not playerData.active_car then
+        return false, "Выберите автомобиль в гараже!"
+    end
+    
+    -- Проверяем, существует ли активный автомобиль
+    local car = Cars.get_car_by_id(playerData.active_car)
+    if not car then
+        return false, "Выбранный автомобиль не найден!"
+    end
+    
+    return true, "Готов к гонке"
+end
+
 -- Инициализация гонки
-function Race.start(opponent, raceType)
+function Race.start(opponent, raceType, playerData)
+    -- Проверка возможности начать гонку
+    local canStart, message = Race.canStartRace(playerData)
+    if not canStart then
+        print("Ошибка: " .. message)
+        return false, message
+    end
+    
     if not opponent then
         print("Ошибка: соперник не указан!")
-        return false
+        return false, "Соперник не указан"
     end
     
     activeRace = {
         opponent = opponent,
         type = raceType or "street",
         startTime = os.time(),
-        status = "active"
+        status = "active",
+        playerData = playerData
     }
     
     print(string.format("=== ГОНКА НАЧАЛАСЬ ==="))
@@ -35,7 +68,7 @@ function Race.start(opponent, raceType)
     -- Здесь будет логика запуска гонки в Assetto Corsa
     -- contentManager.launchRace(...)
     
-    return true
+    return true, "Гонка началась"
 end
 
 -- Завершение гонки (вызывается после финиша)

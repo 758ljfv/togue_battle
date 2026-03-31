@@ -236,6 +236,17 @@ function Menu.mousePressed(x, y, button)
     -- Для shop и garage обработка внутри их модулей
     elseif menuState.currentScreen == "shop" and shopModule then
         shopModule.mousePressed(x, y, button)
+        -- Обработка клика по автомобилю для покупки
+        local screen_w, screen_h = ac.getScreenResolution()
+        local panel_w, panel_h = 900, 650
+        local panel_x, panel_y = (screen_w - panel_w) / 2, (screen_h - panel_h) / 2
+        local list_x = panel_x + 20
+        local list_y = panel_y + 130
+        local list_w = panel_w - 40
+        local list_h = panel_h - 160
+        shopModule.handle_car_click(x, y, list_x, list_y, list_w, list_h)
+    elseif menuState.currentScreen == "garage" and garageModule then
+        -- Garage module handles its own input via update()
     end
 end
 

@@ -1,1 +1,1 @@
-Nothing should be ignored based on the provided file changes. The modified files (`ui/menu.lua` and `ui/shop.lua`) are source code files that should be tracked in version control.
+(data/used_cars.json is a data file, not a build artifact, dependency, or temp file - it should not be ignored)

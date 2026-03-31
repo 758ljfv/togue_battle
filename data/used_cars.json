@@ -1,0 +1,48 @@
+{
+  "cars": [
+    {
+      "id": "used_silvia_001",
+      "name": "Nissan Silvia S15 (Б/У)",
+      "brand": "Nissan",
+      "price": 8000,
+      "max_speed": 240,
+      "acceleration": 6.2,
+      "handling": 8.5,
+      "condition": "good",
+      "mileage": 45000
+    },
+    {
+      "id": "used_levin_001",
+      "name": "Toyota Levin AE86 (Б/У)",
+      "brand": "Toyota",
+      "price": 12000,
+      "max_speed": 210,
+      "acceleration": 8.5,
+      "handling": 9.0,
+      "condition": "excellent",
+      "mileage": 28000
+    },
+    {
+      "id": "used_miata_001",
+      "name": "Mazda Miata MX-5 (Б/У)",
+      "brand": "Mazda",
+      "price": 6500,
+      "max_speed": 190,
+      "acceleration": 9.1,
+      "handling": 8.8,
+      "condition": "fair",
+      "mileage": 67000
+    },
+    {
+      "id": "used_skyline_001",
+      "name": "Nissan Skyline R32 GT-R (Б/У)",
+      "brand": "Nissan",
+      "price": 18000,
+      "max_speed": 250,
+      "acceleration": 5.8,
+      "handling": 8.2,
+      "condition": "good",
+      "mileage": 52000
+    }
+  ]
+}

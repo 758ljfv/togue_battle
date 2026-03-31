@@ -4,6 +4,21 @@ local activeTab = "garage" -- "garage" или "shop"
 local scrollOffset = 0
 local selectedCarIndex = 1
 local hoveredButton = nil
+local saveData = nil -- Кэшированные данные сохранения
+
+-- Загрузка данных сохранения
+local function getSaveData()
+    if not saveData then
+        local SaveModule = require('save.save')
+        saveData = SaveModule.load()
+    end
+    return saveData
+end
+
+-- Сброс кэша при необходимости
+function GarageUI.refreshData()
+    saveData = nil
+end
 
 -- Вспомогательная функция для отрисовки кнопки
 local function drawButton(id, x, y, w, h, text, isActive, isDisabled)
@@ -27,6 +42,8 @@ end
 
 -- Отрисовка списка автомобилей
 local function drawCarList(cars, startX, startY, width, height, isShop)
+    local SaveModule = require('save.save')
+    local data = getSaveData()
     local itemHeight = 60
     local visibleItems = math.floor(height / itemHeight)
     
@@ -43,10 +60,10 @@ local function drawCarList(cars, startX, startY, width, height, isShop)
             
             if not isShop then
                 -- Проверка владения для гаража
-                for _, owned in ipairs(SaveModule.data.garage) do
-                    if owned.id == car.id then
+                for _, owned_id in ipairs(data.owned_cars or {}) do
+                    if owned_id == car.id then
                         isOwned = true
-                        if SaveModule.data.current_car and SaveModule.data.current_car.id == car.id then
+                        if data.active_car and data.active_car == car.id then
                             isSelected = true
                         end
                         break
@@ -54,8 +71,8 @@ local function drawCarList(cars, startX, startY, width, height, isShop)
                 end
             else
                 -- Проверка владения для магазина (чтобы не купить дважды)
-                for _, owned in ipairs(SaveModule.data.garage) do
-                    if owned.id == car.id then
+                for _, owned_id in ipairs(data.owned_cars or {}) do
+                    if owned_id == car.id then
                         isOwned = true
                         break
                     end
@@ -84,7 +101,9 @@ local function drawCarList(cars, startX, startY, width, height, isShop)
 end
 
 function GarageUI.update(dt, input)
-    local cars = (activeTab == "shop") and Cars.new_cars or SaveModule.data.garage
+    local SaveModule = require('save.save')
+    local data = getSaveData()
+    local cars = (activeTab == "shop") and Cars.new_cars or (data.owned_cars or {})
     
     -- Сброс наведения
     hoveredButton = nil
@@ -136,24 +155,25 @@ function GarageUI.update(dt, input)
                         if activeTab == "shop" then
                             -- Покупка
                             local owned = false
-                            for _, c in ipairs(SaveModule.data.garage) do 
-                                if c.id == car.id then 
+                            for _, owned_id in ipairs(data.owned_cars or {}) do 
+                                if owned_id == car.id then 
                                     owned = true 
                                     break 
                                 end 
                             end
                             
                             if not owned then
-                                if SaveModule.data.money >= car.price then
-                                    table.insert(SaveModule.data.garage, car)
-                                    SaveModule.data.money = SaveModule.data.money - car.price
-                                    SaveModule.save()
+                                if data.money >= car.price then
+                                    -- Используем правильный API
+                                    data.money = data.money - car.price
+                                    SaveModule.buyCar(data, car.id)
+                                    saveData = data -- Обновляем кэш
                                 end
                             end
                         else
                             -- Выбор авто
-                            SaveModule.set_current_car(car)
-                            SaveModule.save()
+                            SaveModule.setActiveCar(data, car.id)
+                            saveData = data -- Обновляем кэш
                         end
                     end
                 end
@@ -170,6 +190,8 @@ function GarageUI.update(dt, input)
 end
 
 function GarageUI.render()
+    local SaveModule = require('save.save')
+    local data = getSaveData()
     local w, h = ac.getScreenResolution()
     
     -- Фон
@@ -179,7 +201,7 @@ function GarageUI.render()
     ac.renderText(activeTab == "shop" and "АВТОСАЛОН" or "ГАРАЖ", w/2, 40, 0, 0.5, 0, 0, 1.2, 1.2, 1, 1, 1)
     
     -- Баланс
-    ac.renderText(string.format("%d $", SaveModule.data.money), w - 20, 40, 0, 1, 0, 0, 1, 1, 0, 1, 0)
+    ac.renderText(string.format("%d $", data.money or 0), w - 20, 40, 0, 1, 0, 0, 1, 1, 0, 1, 0)
     
     -- Табы
     local tabY = 100
@@ -205,10 +227,19 @@ function GarageUI.render()
     if activeTab == "shop" then
         drawCarList(Cars.new_cars, listX, listY, listW, listH, true)
     else
-        if #SaveModule.data.garage == 0 then
+        local owned_cars = data.owned_cars or {}
+        if #owned_cars == 0 then
             ac.renderText("У вас нет автомобилей. Купите первый в салоне!", w/2, h/2, 0, 0.5, 0.5, 0, 1, 1, 1, 0.5, 0.5)
         else
-            drawCarList(SaveModule.data.garage, listX, listY, listW, listH, false)
+            -- Преобразуем ID автомобилей в объекты для отображения
+            local garageCars = {}
+            for _, car_id in ipairs(owned_cars) do
+                local car = Cars.get_car_by_id(car_id)
+                if car then
+                    table.insert(garageCars, car)
+                end
+            end
+            drawCarList(garageCars, listX, listY, listW, listH, false)
         end
     end
     

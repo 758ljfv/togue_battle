@@ -1,6 +1,6 @@
 local ac = require('ac')
 local Cars = require('cars')
-local SaveModule = require('save')
+local SaveModule = require('save.save')
 
 local Shop = {}
 
@@ -9,6 +9,17 @@ Shop.current_brand = 1
 Shop.scroll_offset = 0
 Shop.hovered_button = nil
 Shop.brand_buttons = {} -- Храним координаты кнопок брендов
+Shop.cars_loaded = false -- Флаг загрузки данных
+
+-- Проверяем, загружены ли данные
+function Shop.ensure_cars_loaded()
+    if not Shop.cars_loaded and Cars.get_brands then
+        local brands = Cars.get_brands()
+        if brands and #brands > 0 then
+            Shop.cars_loaded = true
+        end
+    end
+end
 
 function Shop.draw()
     local screen_w, screen_h = ac.getScreenResolution()
@@ -21,8 +32,9 @@ function Shop.draw()
     -- Заголовок
     ac.renderText(panel_x + 20, panel_y + 20, 'Автосалон', 28, {r = 255, g = 255, b = 255})
 
-    -- Баланс
-    local money_text = string.format('Баланс: $%d', SaveModule.data.money or 0)
+    -- Баланс - загружаем данные корректно
+    local save_data = SaveModule.load()
+    local money_text = string.format('Баланс: $%d', save_data.money or 0)
     ac.renderText(panel_x + panel_w - 200, panel_y + 25, money_text, 22, {r = 100, g = 255, b = 100})
 
     -- Кнопки брендов
@@ -90,8 +102,12 @@ function Shop.mousePressed(x, y, button)
 end
 
 function Shop.draw_car_list(x, y, w, h)
+    -- Проверяем загрузку данных
+    Shop.ensure_cars_loaded()
+    
     local cars = Cars.get_cars_by_brand(Shop.brands[Shop.current_brand])
-    local owned_cars = SaveModule.data.cars or {}
+    local save_data = SaveModule.load()
+    local owned_cars = save_data.owned_cars or {}
     local max_visible = 7
     local item_height = 70
 
@@ -113,8 +129,8 @@ function Shop.draw_car_list(x, y, w, h)
 
         -- Проверка владения
         local is_owned = false
-        for _, owned in ipairs(owned_cars) do
-            if owned.id == car.id then
+        for _, owned_id in ipairs(owned_cars) do
+            if owned_id == car.id then
                 is_owned = true
                 break
             end
@@ -124,28 +140,6 @@ function Shop.draw_car_list(x, y, w, h)
         local bg_color = {r = 40, g = 40, b = 45, a = 255}
         if is_hovered then
             bg_color = {r = 60, g = 60, b = 70, a = 255}
-            Shop.hovered_button = {'car', car, car_index}
-
-function Shop.try_buy_car(car, type)
-    local save_module = require("save.save")
-    local data = save_module.load()
-    
-    -- Проверка, есть ли уже такая машина
-    if save_module.hasCar(data, car.id) then
-        print("Эта машина уже у вас!")
-        return
-    end
-    
-    local result = Cars.buy_car(car.id, type, data.money)
-    
-    if result.success then
-        -- Обновляем сохранение
-        data.money = result.remaining_money
-        save_module.buyCar(data, car.id)
-        
-        -- Если это первая покупка, ставим её активной
-        if #save_module.getOwnedCars(data) == 1 then
-            save_module.setActiveCar(data, car.id)
         end
 
         ac.renderRect(x, item_y, w, item_height, bg_color)
@@ -173,6 +167,11 @@ function Shop.try_buy_car(car, type)
         local stats_text = string.format('Скорость: %d | Ускорение: %.1f | Управление: %.1f',
             car.max_speed or 0, car.acceleration or 0, car.handling or 0)
         ac.renderText(x + 15, item_y + 35, stats_text, 14, {r = 200, g = 200, b = 200})
+        
+        -- Обработка клика по автомобилю для покупки
+        if is_hovered and Shop.hovered_button == nil then
+            Shop.hovered_button = {'car', car, car_index}
+        end
     end
 
     -- Обработка скролла колеса
@@ -182,6 +181,75 @@ function Shop.try_buy_car(car, type)
         if Shop.scroll_offset < 0 then Shop.scroll_offset = 0 end
         if Shop.scroll_offset > #cars - max_visible then
             Shop.scroll_offset = #cars - max_visible
+        end
+    end
+end
+
+-- Попытка покупки автомобиля
+function Shop.try_buy_car(car, car_type)
+    local save_data = SaveModule.load()
+    
+    -- Проверка, есть ли уже такая машина
+    if SaveModule.hasCar(save_data, car.id) then
+        print("Эта машина уже у вас!")
+        return false
+    end
+    
+    local result = Cars.buy_car(car.id, car_type, save_data.money)
+    
+    if result.success then
+        -- Обновляем сохранение с правильным значением денег
+        save_data.money = result.remaining_money
+        SaveModule.buyCar(save_data, car.id)
+        
+        -- Если это первая покупка, ставим её активной
+        if #SaveModule.getOwnedCars(save_data) == 1 then
+            SaveModule.setActiveCar(save_data, car.id)
+        end
+        
+        SaveModule.save(nil, save_data)
+        print("Автомобиль успешно куплен!")
+        return true
+    else
+        print("Ошибка покупки: " .. (result.error or "Неизвестная ошибка"))
+        return false
+    end
+end
+
+-- Обработка кликов по автомобилям
+function Shop.handle_car_click(mouse_x, mouse_y, list_x, list_y, list_w, list_h)
+    local cars = Cars.get_cars_by_brand(Shop.brands[Shop.current_brand])
+    local save_data = SaveModule.load()
+    local owned_cars = save_data.owned_cars or {}
+    local max_visible = 7
+    local item_height = 70
+    
+    for i = 1, math.min(#cars, max_visible) do
+        local car_index = Shop.scroll_offset + i
+        if car_index > #cars then break end
+        
+        local car = cars[car_index]
+        local item_y = list_y + (i - 1) * item_height
+        
+        if mouse_x >= list_x and mouse_x <= list_x + list_w and 
+           mouse_y >= item_y and mouse_y <= item_y + item_height then
+           
+            -- Проверка владения
+            local is_owned = false
+            for _, owned_id in ipairs(owned_cars) do
+                if owned_id == car.id then
+                    is_owned = true
+                    break
+                end
+            end
+            
+            if not is_owned then
+                -- Покупка нового авто
+                Shop.try_buy_car(car, "new")
+            else
+                print("Этот автомобиль уже в вашем гараже")
+            end
+            return
         end
     end
 end
