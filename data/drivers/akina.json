@@ -56,6 +56,120 @@
       "home_track":"akina",
 
       "route":"downhill"
+    },
+    {
+      "id":"akina_street_02",
+
+      "type":"street",
+
+      "name":"Ren Takahashi",
+
+      "car_id":"civic_eg6",
+
+      "skill":62,
+
+      "money_reward":400,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
+    },
+    {
+      "id":"akina_street_03",
+
+      "type":"street",
+
+      "name":"Yuki Nakamura",
+
+      "car_id":"integra_dc2",
+
+      "skill":70,
+
+      "money_reward":550,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
+    },
+    {
+      "id":"akina_street_04",
+
+      "type":"street",
+
+      "name":"Sho Tanaka",
+
+      "car_id":"silvia_s14",
+
+      "skill":65,
+
+      "money_reward":450,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
+    },
+    {
+      "id":"akina_street_05",
+
+      "type":"street",
+
+      "name":"Haruto Sato",
+
+      "car_id":"rx7_fc",
+
+      "skill":72,
+
+      "money_reward":600,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
+    },
+    {
+      "id":"akina_street_06",
+
+      "type":"street",
+
+      "name":"Kaito Yamamoto",
+
+      "car_id":"celica_gt4",
+
+      "skill":66,
+
+      "money_reward":475,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
+    },
+    {
+      "id":"akina_street_07",
+
+      "type":"street",
+
+      "name":"Riku Kobayashi",
+
+      "car_id":"mx5_na",
+
+      "skill":60,
+
+      "money_reward":350,
+
+      "reputation_reward":1,
+
+      "home_track":"akina",
+
+      "route":"downhill"
     }
 
   ]
