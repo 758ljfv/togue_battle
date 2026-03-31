@@ -39,6 +39,321 @@
       "defeated":false
     },
     {
+      "id":"akina_02",
+
+      "type": "blacklist",
+
+      "blacklist_position": 9,
+
+      "name":"Hiroshi Yamada",
+
+      "nickname":"Night Cruiser",
+
+      "car_id":"mx5_na",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":77,
+
+      "aggression":62,
+
+      "consistency":72,
+
+      "battle_style":"balanced",
+
+      "reputation_reward":6,
+
+      "money_reward":1200,
+
+      "unlock_reputation":5,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_03",
+
+      "type": "blacklist",
+
+      "blacklist_position": 8,
+
+      "name":"Takeshi Nakano",
+
+      "nickname":"Drift King Jr",
+
+      "car_id":"civic_eg6",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":79,
+
+      "aggression":65,
+
+      "consistency":74,
+
+      "battle_style":"aggressive",
+
+      "reputation_reward":7,
+
+      "money_reward":1400,
+
+      "unlock_reputation":11,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_04",
+
+      "type": "blacklist",
+
+      "blacklist_position": 7,
+
+      "name":"Ryo Ishikawa",
+
+      "nickname":"Mountain Fox",
+
+      "car_id":"integra_dc2",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":81,
+
+      "aggression":68,
+
+      "consistency":76,
+
+      "battle_style":"technical",
+
+      "reputation_reward":8,
+
+      "money_reward":1600,
+
+      "unlock_reputation":18,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_05",
+
+      "type": "blacklist",
+
+      "blacklist_position": 6,
+
+      "name":"Satoshi Fujiwara",
+
+      "nickname":"Ghost of Akina",
+
+      "car_id":"silvia_s13",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":83,
+
+      "aggression":70,
+
+      "consistency":78,
+
+      "battle_style":"balanced",
+
+      "reputation_reward":10,
+
+      "money_reward":1800,
+
+      "unlock_reputation":26,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_06",
+
+      "type": "blacklist",
+
+      "blacklist_position": 5,
+
+      "name":"Kenji Matsuda",
+
+      "nickname":"Speed Demon",
+
+      "car_id":"silvia_s14",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":85,
+
+      "aggression":73,
+
+      "consistency":80,
+
+      "battle_style":"aggressive",
+
+      "reputation_reward":12,
+
+      "money_reward":2000,
+
+      "unlock_reputation":36,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_07",
+
+      "type": "blacklist",
+
+      "blacklist_position": 4,
+
+      "name":"Masato Ide",
+
+      "nickname":"Akina Specialist",
+
+      "car_id":"celica_gt4",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":87,
+
+      "aggression":75,
+
+      "consistency":82,
+
+      "battle_style":"technical",
+
+      "reputation_reward":15,
+
+      "money_reward":2300,
+
+      "unlock_reputation":48,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_08",
+
+      "type": "blacklist",
+
+      "blacklist_position": 3,
+
+      "name":"Shingo Shoji",
+
+      "nickname":"Myogi Visitor",
+
+      "car_id":"rx7_fc",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":89,
+
+      "aggression":78,
+
+      "consistency":84,
+
+      "battle_style":"aggressive",
+
+      "reputation_reward":18,
+
+      "money_reward":2600,
+
+      "unlock_reputation":63,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_09",
+
+      "type": "blacklist",
+
+      "blacklist_position": 2,
+
+      "name":"Takahashi Ryosuke",
+
+      "nickname":"White Comet",
+
+      "car_id":"ks_mazda_rx7",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":92,
+
+      "aggression":80,
+
+      "consistency":87,
+
+      "battle_style":"technical",
+
+      "reputation_reward":22,
+
+      "money_reward":3000,
+
+      "unlock_reputation":81,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
+      "id":"akina_boss",
+
+      "type": "blacklist",
+
+      "blacklist_position": 1,
+
+      "name":"Bunta Fujiwara",
+
+      "nickname":"Legend of Akina",
+
+      "car_id":"ks_supra_mkiv",
+
+      "home_track":"akina",
+
+      "route":"downhill",
+
+      "skill":95,
+
+      "aggression":82,
+
+      "consistency":90,
+
+      "battle_style":"master",
+
+      "reputation_reward":30,
+
+      "money_reward":5000,
+
+      "unlock_reputation":103,
+
+      "unlocked":false,
+
+      "defeated":false
+    },
+    {
       "id":"akina_street_01",
 
       "type":"street",
