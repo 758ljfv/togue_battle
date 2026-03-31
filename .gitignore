@@ -1,1 +1,1 @@
-Nothing should be ignored based on the provided file changes. The modification of 'ui/shop.lua' is a source code file that should be tracked in version control.
+Nothing should be ignored based on the provided file changes. The modified files (`ui/menu.lua` and `ui/shop.lua`) are source code files that should be tracked in version control.

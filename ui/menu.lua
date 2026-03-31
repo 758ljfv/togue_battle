@@ -233,8 +233,10 @@ function Menu.mousePressed(x, y, button)
                 break
             end
         end
-    end
     -- Для shop и garage обработка внутри их модулей
+    elseif menuState.currentScreen == "shop" and shopModule then
+        shopModule.mousePressed(x, y, button)
+    end
 end
 
 -- Действия кнопок

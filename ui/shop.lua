@@ -39,9 +39,6 @@ function Shop.draw()
         if is_hovered then
             color = {r = 80, g = 80, b = 100, a = 255}
             Shop.hovered_button = {'brand', i}
-            if ac.getMouseState().left then
-                Shop.current_brand = i
-            end
         elseif Shop.current_brand == i then
             color = {r = 100, g = 150, b = 255, a = 255}
         end
@@ -78,6 +75,18 @@ end
 function Shop.is_mouse_over(x, y, w, h)
     local mouse_x, mouse_y = ac.getMousePosition()
     return mouse_x >= x and mouse_x <= x + w and mouse_y >= y and mouse_y <= y + h
+end
+
+function Shop.mousePressed(x, y, button)
+    if button ~= 1 then return end -- Обрабатываем только левую кнопку
+    
+    -- Проверка кликов по кнопкам брендов
+    for i, btn in ipairs(Shop.brand_buttons) do
+        if x >= btn.x and x <= btn.x + btn.w and y >= btn.y and y <= btn.y + btn.h then
+            Shop.current_brand = i
+            return
+        end
+    end
 end
 
 function Shop.draw_car_list(x, y, w, h)
