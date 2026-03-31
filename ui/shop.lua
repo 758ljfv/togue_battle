@@ -21,7 +21,7 @@ function Shop.ensure_cars_loaded()
     end
 end
 
-function Shop.draw()
+function Shop.render()
     local screen_w, screen_h = ac.getScreenResolution()
     local panel_w, panel_h = 900, 650
     local panel_x, panel_y = (screen_w - panel_w) / 2, (screen_h - panel_h) / 2
@@ -78,7 +78,7 @@ function Shop.draw()
     -- Фон списка
     ac.renderRect(list_x, list_y, list_w, list_h, {r = 30, g = 30, b = 35, a = 200})
 
-    Shop.draw_car_list(list_x, list_y, list_w, list_h)
+    Shop.render_car_list(list_x, list_y, list_w, list_h)
 
     -- Подсказка
     ac.renderText(panel_x + 20, panel_y + panel_h - 30, 'ЛКМ - Купить/Выбрать бренд | Колесо - Прокрутка | 1-4 - Бренд', 16, {r = 200, g = 200, b = 200})
@@ -101,7 +101,8 @@ function Shop.mousePressed(x, y, button)
     end
 end
 
-function Shop.draw_car_list(x, y, w, h)
+-- Переименована функция draw_car_list в render_car_list
+function Shop.render_car_list(x, y, w, h)
     -- Проверяем загрузку данных
     Shop.ensure_cars_loaded()
     
